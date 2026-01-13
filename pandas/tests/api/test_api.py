@@ -176,6 +176,7 @@ class TestPDApi(Base):
         "read_orc",
         "read_spss",
         "read_iceberg",
+        "read_tsfile",
     ]
 
     # top-level json funcs
