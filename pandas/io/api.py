@@ -35,6 +35,7 @@ from pandas.io.sql import (
     read_sql_table,
 )
 from pandas.io.stata import read_stata
+from pandas.io.tsfile import read_tsfile
 from pandas.io.xml import read_xml
 
 __all__ = [
@@ -60,6 +61,7 @@ __all__ = [
     "read_sql_table",
     "read_stata",
     "read_table",
+    "read_tsfile",
     "read_xml",
     "to_pickle",
 ]

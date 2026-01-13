@@ -3268,6 +3268,49 @@ class DataFrame(NDFrame, OpsMixin):
             self, path, engine=engine, index=index, engine_kwargs=engine_kwargs
         )
 
+    def to_tsfile(
+        self,
+        path: FilePath,
+        *,
+        table_name: str = "default_table",
+    ) -> None:
+        """
+        Write a DataFrame to the TsFile format.
+
+        Parameters
+        ----------
+        path : str or path object
+            String or path object (implementing ``os.PathLike[str]``) specifying
+            the file path to write the TsFile to.
+        table_name : str, default "default_table"
+            Name of the table in the TsFile.
+
+        Returns
+        -------
+        None
+
+        See Also
+        --------
+        read_tsfile : Read a TsFile into a DataFrame.
+        DataFrame.to_parquet : Write a DataFrame to a parquet file.
+
+        Notes
+        -----
+        * This function requires the `tsfile <https://pypi.org/project/tsfile/>`_
+          library.
+        * TsFile is a columnar file format designed for time-series data.
+        * The TsFile format automatically adds a 'time' column using row indices
+          as timestamps.
+
+        Examples
+        --------
+        >>> df = pd.DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
+        >>> df.to_tsfile("data.tsfile")  # doctest: +SKIP
+        """
+        from pandas.io.tsfile import to_tsfile
+
+        to_tsfile(self, path, table_name=table_name)
+
     @overload
     def to_html(
         self,
