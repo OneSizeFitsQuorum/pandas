@@ -20,12 +20,14 @@ if TYPE_CHECKING:
 
 
 # Mapping from pandas/numpy dtypes to TsFile data types
-def _get_tsfile_dtype(dtype):
+def _get_tsfile_dtype(tsfile_module, dtype):
     """
     Map pandas dtype to TsFile TSDataType.
 
     Parameters
     ----------
+    tsfile_module : module
+        The tsfile module.
     dtype : numpy dtype or pandas dtype
         The dtype to convert.
 
@@ -34,8 +36,7 @@ def _get_tsfile_dtype(dtype):
     TSDataType
         The corresponding TsFile data type.
     """
-    tsfile = import_optional_dependency("tsfile")
-    TSDataType = tsfile.TSDataType
+    TSDataType = tsfile_module.TSDataType
 
     dtype_str = str(dtype)
 
@@ -60,12 +61,14 @@ def _get_tsfile_dtype(dtype):
         return TSDataType.STRING
 
 
-def _convert_value(value, tsfile_dtype):
+def _convert_value(tsfile_module, value, tsfile_dtype):
     """
     Convert a value to the appropriate type for TsFile.
 
     Parameters
     ----------
+    tsfile_module : module
+        The tsfile module.
     value : Any
         The value to convert.
     tsfile_dtype : TSDataType
@@ -76,8 +79,7 @@ def _convert_value(value, tsfile_dtype):
     Any
         The converted value.
     """
-    tsfile = import_optional_dependency("tsfile")
-    TSDataType = tsfile.TSDataType
+    TSDataType = tsfile_module.TSDataType
 
     if value is None or (isinstance(value, float) and np.isnan(value)):
         return None
@@ -151,12 +153,6 @@ def to_tsfile(
     tsfile = import_optional_dependency(
         "tsfile", extra="tsfile is required for TsFile support."
     )
-    from tsfile import (
-        ColumnSchema,
-        TableSchema,
-        Tablet,
-        TsFileTableWriter,
-    )
 
     if not isinstance(df, DataFrame):
         raise ValueError("to_tsfile only supports IO with DataFrames")
@@ -165,17 +161,18 @@ def to_tsfile(
 
     # Build column schemas
     column_names = list(df.columns)
-    tsfile_dtypes = [_get_tsfile_dtype(df[col].dtype) for col in column_names]
+    tsfile_dtypes = [_get_tsfile_dtype(tsfile, df[col].dtype) for col in column_names]
 
     columns = [
-        ColumnSchema(str(col), dtype) for col, dtype in zip(column_names, tsfile_dtypes)
+        tsfile.ColumnSchema(str(col), dtype)
+        for col, dtype in zip(column_names, tsfile_dtypes)
     ]
-    schema = TableSchema(table_name, columns)
+    schema = tsfile.TableSchema(table_name, columns)
 
     # Write to TsFile
-    with TsFileTableWriter(path, schema) as writer:
+    with tsfile.TsFileTableWriter(path, schema) as writer:
         # Create tablet
-        tablet = Tablet(
+        tablet = tsfile.Tablet(
             [str(col) for col in column_names], tsfile_dtypes, max_row_num=len(df)
         )
         tablet.set_table_name(table_name)
@@ -193,7 +190,7 @@ def to_tsfile(
         for row_idx in range(len(df)):
             for col_idx, col in enumerate(column_names):
                 value = df.iloc[row_idx, col_idx]
-                converted_value = _convert_value(value, tsfile_dtypes[col_idx])
+                converted_value = _convert_value(tsfile, value, tsfile_dtypes[col_idx])
                 if converted_value is not None:
                     tablet.add_value_by_index(col_idx, row_idx, converted_value)
 
@@ -247,10 +244,9 @@ def read_tsfile(
     --------
     >>> df = pd.read_tsfile("data.tsfile")  # doctest: +SKIP
     """
-    import_optional_dependency(
+    tsfile = import_optional_dependency(
         "tsfile", extra="tsfile is required for TsFile support."
     )
-    from tsfile import to_dataframe
 
     path = stringify_path(path)
 
@@ -265,6 +261,6 @@ def read_tsfile(
     if end_time is not None:
         kwargs["end_time"] = end_time
 
-    result = to_dataframe(path, **kwargs)
+    result = tsfile.to_dataframe(path, **kwargs)
 
     return result

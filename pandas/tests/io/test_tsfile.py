@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 import pandas as pd
-import pandas._testing as tm
 
 from pandas.io.tsfile import (
     read_tsfile,
@@ -12,7 +11,7 @@ from pandas.io.tsfile import (
 )
 
 try:
-    import tsfile as tsfile_lib
+    import tsfile
 
     _HAVE_TSFILE = True
 except ImportError:
